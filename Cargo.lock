@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "purity-rs"
+name = "purity-test"
 version = "0.1.0"
