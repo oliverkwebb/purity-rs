@@ -53,7 +53,8 @@ fn is_char_important(c: Character) -> (bool, char) {
 
 fn push_until<R: Read>(stream: &mut std::io::Bytes<R>, c: char, s: &mut String) {
     // DO consume the ending char, since we know what it is and we don't want it
-    while let x = is_char_important(read_char(stream).unwrap()) {
+    while let Some(uninc) = read_char(stream) {
+		let x = is_char_important(uninc);
         if x == (true, c) {
             break;
         }
