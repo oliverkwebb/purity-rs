@@ -609,7 +609,8 @@
 			function showres() {
 				let stats = (x => [x.length, x.reduce((a, b) => a + b, 0)])([...document.querySelectorAll("input")].map(x => x.checked));
 				document.getElementById("res").innerHTML = `you answered ${stats[1]} yes out of ${stats[0]} questions. Which makes your
-				purity score ${((stats[0]-stats[1]/stats[0])/100).toFixed(2)}%`;
+				purity score ${(((stats[1]/stats[0]))*100).toFixed(2)}%`;
+				return stats;
 			}
 		</script>
 		<button type="button" onclick="showres()">See Purity Score</button>

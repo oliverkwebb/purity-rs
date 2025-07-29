@@ -41,9 +41,18 @@ fn output_html<R: Read>(parser: PurityParser<R>) {
 
     for block in parser {
         match block {
-            PurityBlock::PlainText(header) => println!("<pre>{}</pre>", html_escape::encode_text(&header)),
-            PurityBlock::SubjectHeader(s, n) => println!("<h2>Section {}: {}</h2><hr>", n, html_escape::encode_text(&s)),
-            PurityBlock::Question(s, _) => println!("<li><input type=\"checkbox\">{}</li>", html_escape::encode_text(&s)),
+            PurityBlock::PlainText(header) => {
+                println!("<pre>{}</pre>", html_escape::encode_text(&header))
+            }
+            PurityBlock::SubjectHeader(s, n) => println!(
+                "<h2>Section {}: {}</h2><hr>",
+                n,
+                html_escape::encode_text(&s)
+            ),
+            PurityBlock::Question(s, _) => println!(
+                "<li><input type=\"checkbox\">{}</li>",
+                html_escape::encode_text(&s)
+            ),
             PurityBlock::Conclusion(s) => println!("<pre>{}</pre>", html_escape::encode_text(&s)),
         }
     }
@@ -55,7 +64,8 @@ fn output_html<R: Read>(parser: PurityParser<R>) {
 			function showres() {{
 				let stats = (x => [x.length, x.reduce((a, b) => a + b, 0)])([...document.querySelectorAll("input")].map(x => x.checked));
 				document.getElementById("res").innerHTML = `you answered ${{stats[1]}} yes out of ${{stats[0]}} questions. Which makes your
-				purity score ${{((stats[0]-stats[1]/stats[0])/100).toFixed(2)}}%`;
+				purity score ${{(((stats[1]/stats[0]))*100).toFixed(2)}}%`;
+				return stats;
 			}}
 		</script>
 		<button type="button" onclick="showres()">See Purity Score</button>
