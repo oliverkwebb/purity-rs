@@ -5,3 +5,10 @@ version = 4
 [[package]]
 name = "purity-test"
 version = "0.1.0"
+dependencies = [
+ "purity_parser",
+]
+
+[[package]]
+name = "purity_parser"
+version = "0.1.0"

@@ -1,17 +1,16 @@
-use std::fs::File;
 use std::io::Bytes;
 #[warn(missing_docs)]
 use std::io::prelude::*;
 
 /// A purity file is a sequence of blocks surrounded by parens, brackets, curly brackets, or greater/less-than symbols
-enum PurityBlock {
+pub enum PurityBlock {
     PlainText(String),
     SubjectHeader(String, usize),
     Question(String, usize),
     Conclusion(String),
 }
 
-struct PurityParser<R: Read> {
+pub struct PurityParser<R: Read> {
     subject_number: usize,
     question_number: usize,
     source: Bytes<R>,
@@ -89,7 +88,7 @@ impl<R: Read> Iterator for PurityParser<R> {
         };
         push_until(&mut char_stream, close, &mut text);
 
-        /// Give back the block type
+        // Give back the block type
         match close {
             ')' => {
                 self.question_number += 1;
@@ -104,19 +103,4 @@ impl<R: Read> Iterator for PurityParser<R> {
             _ => None,
         }
     }
-}
-
-fn main() -> std::io::Result<()> {
-    let input = File::open("tests/hacker")?;
-    let test: Vec<PurityBlock> = PurityParser::new(input).collect();
-    for block in test {
-        match block {
-            PurityBlock::PlainText(header) => println!("{}", header),
-            PurityBlock::SubjectHeader(s, n) => println!("---\nSection {}. {}", n, s),
-            PurityBlock::Question(s, n) => println!("{}. {}", n, s),
-            PurityBlock::Conclusion(s) => println!("End: {}", s),
-        }
-    }
-
-    Ok(())
 }

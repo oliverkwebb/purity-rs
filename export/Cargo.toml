@@ -1,0 +1,7 @@
+[package]
+name = "purity-test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+purity_parser = {path = "../parser"}
