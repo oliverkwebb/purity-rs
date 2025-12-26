@@ -1,5 +1,3 @@
-use std::io::Bytes;
-#[warn(missing_docs)]
 use std::io::prelude::*;
 
 /// A purity file is a sequence of blocks surrounded by parens, brackets, curly brackets, or greater/less-than symbols
@@ -13,7 +11,7 @@ pub enum PurityBlock {
 pub struct PurityParser<R: Read> {
     subject_number: usize,
     question_number: usize,
-    source: Bytes<R>,
+    source: CharacterSream<R>,
 }
 
 impl<R: Read> PurityParser<R> {
@@ -21,73 +19,79 @@ impl<R: Read> PurityParser<R> {
         PurityParser {
             subject_number: 0,
             question_number: 0,
-            source: input.bytes(),
+            source: CharacterSream::new(input.bytes()),
         }
     }
 }
 
 #[derive(Copy, Clone)]
-enum Character {
-    Escaped(char),
-    Unescaped(char),
+struct Character {
+    is_escaped: bool,
+    char: char,
 }
-
-fn read_char<R: Read>(stream: &mut std::io::Bytes<R>) -> Option<Character> {
-    let byte = stream.next()?.ok()?;
-    if byte as char == '\\' {
-        Some(Character::Escaped(stream.next()?.ok()? as char))
-    } else {
-        Some(Character::Unescaped(byte as char))
+/// Abstract away the UTF-8 parsing errors until a good solution comes up
+struct CharacterSream<R: Read> {
+    stream: std::io::Bytes<R>,
+}
+impl<R: Read> CharacterSream<R> {
+    fn new(stream: std::io::Bytes<R>) -> Self {
+        CharacterSream { stream }
     }
 }
-
-fn is_char_important(c: Character) -> (bool, char) {
-    match c {
-        Character::Escaped(c) => (false, c),
-        Character::Unescaped(c) => match c {
-            '[' | ']' | '(' | ')' | '{' | '}' | '<' | '>' => (true, c),
-            other => (false, other),
-        },
-    }
-}
-
-fn push_until<R: Read>(stream: &mut std::io::Bytes<R>, c: char, s: &mut String) {
-    // DO consume the ending char, since we know what it is and we don't want it
-    while let Some(uninc) = read_char(stream) {
-        let x = is_char_important(uninc);
-        if x == (true, c) {
-            break;
+impl<R: Read> Iterator for CharacterSream<R> {
+    type Item = Character;
+    fn next(&mut self) -> Option<Self::Item> {
+        let byte = self.stream.next()?.ok()?;
+        if byte as char == '\\' {
+            Some(Character {
+                is_escaped: true,
+                char: self.stream.next()?.ok()? as char,
+            })
+        } else {
+            Some(Character {
+                is_escaped: false,
+                char: byte as char,
+            })
         }
-        s.push(x.1);
     }
 }
+
+fn is_char_important(c: Character) -> bool {
+    matches!(
+        (c.is_escaped, c.char),
+        (false, '[' | ']' | '(' | ')' | '{' | '}' | '<' | '>')
+    )
+}
+
+fn push_until<R: Read>(stream: &mut CharacterSream<R>, c: char, s: &mut String) {
+    // DO consume the ending char, since we know what it is and we don't want it
+    while let Some(uninc) = stream.next()
+        && (uninc.is_escaped || uninc.char != c)
+    {
+        s.push(uninc.char);
+    }
+}
+
 impl<R: Read> Iterator for PurityParser<R> {
     type Item = PurityBlock;
 
     fn next(&mut self) -> Option<Self::Item> {
         // All out-of-block characters are treated as comments
         // I'm assuming ASCII since these test files are from 1989, TODO
-        let mut char_stream = &mut self.source;
+        let char_stream = &mut self.source;
 
         // Discard extra comment/formatting bytes before blocks
-        let mut char_of_importance: (bool, char);
-        loop {
-            char_of_importance = is_char_important(read_char(char_stream)?);
-            if char_of_importance.0 {
-                break;
-            }
-        }
-
+        let char_of_importance = char_stream.find(|c| is_char_important(*c))?.char;
         // Read the text inside the block
         let mut text: String = String::new();
-        let close = match char_of_importance.1 {
+        let close = match char_of_importance {
             '(' => ')',
             '[' => ']',
             '{' => '}',
             '<' => '>',
             _ => return None,
         };
-        push_until(&mut char_stream, close, &mut text);
+        push_until(char_stream, close, &mut text);
 
         // Give back the block type
         match close {

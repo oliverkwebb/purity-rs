@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+#     std removing the ability to do
+# what this crate does is a horrible
+# technical   decision   that   goes
+# against  what   makes  rust   good
+# utf-8 = "0.7.6"

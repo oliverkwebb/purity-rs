@@ -1,0 +1,29 @@
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<style>
+				body {
+					font-family: sans-serif;
+					max-width: 800px;
+					margin: auto;
+					padding-bottom: 100px;
+				}
+
+				h2 {
+					text-align: center;
+				}
+
+				button {
+					width: 100%;
+					font-size: 1.5rem;
+					height: 40px;
+				}
+
+				#res {
+					text-align: center;
+					font-size: 1.3rem;
+				}
+			</style>
+		</head>
+		<body>
+		<ol>
